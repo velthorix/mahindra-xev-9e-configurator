@@ -1,0 +1,19 @@
+{
+  "name": "mahindra-xev-9e-configurator",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A photorealistic, procedurally modelled Mahindra XEV 9e electric SUV coupé configurator built with Three.js.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1",
+    "vite": "^8.3.4"
+  }
+}

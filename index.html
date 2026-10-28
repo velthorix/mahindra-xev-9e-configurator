@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="An interactive, photorealistic Three.js configurator for the Mahindra XEV 9e electric SUV coupé."
+    />
+    <meta name="theme-color" content="#050706" />
+    <title>Mahindra XEV 9e — Electric SUV Coupé / Configurator</title>
+    <style>
+      html { background: #050706; }
+    </style>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111413'/%3E%3Cpath d='M10 45 L24 18 L32 34 L40 18 L54 45 L47 45 L40 31 L34 44 L30 44 L24 31 L17 45 Z' fill='%23e8e4da'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body data-light="off">
+    <div id="app">
+      <div id="stage" aria-hidden="true">
+        <canvas id="scene-canvas"></canvas>
+      </div>
+
+      <header class="topbar">
+        <div class="topbar__left">
+          <a class="brand" href="#" aria-label="Mahindra XEV 9e home">
+            <span class="brand__mark" aria-hidden="true">
+              <svg viewBox="0 0 122 86" fill="currentColor">
+                <path d="M117.7 3.8 L112.3 1.3 L103.9 5.6 L88.4 20.4 L66.1 45.0 L69.9 48.7 L104.7 16.3 L109.0 14.0 L110.9 14.9 L110.0 30.4 L102.3 57.7 L95.3 73.2 L92.6 75.9 L89.1 76.6 L84.8 74.4 L20.9 8.2 L11.8 2.0 L7.8 1.5 L5.0 2.8 L2.4 6.7 L1.3 12.7 L3.8 31.0 L12.2 59.6 L21.7 78.8 L28.0 83.5 L35.2 82.5 L44.2 75.7 L55.1 64.2 L51.6 60.9 L34.8 75.5 L30.4 76.6 L27.5 74.6 L22.0 64.7 L14.3 41.7 L10.3 22.4 L11.3 14.3 L15.4 15.4 L78.5 77.6 L85.3 82.4 L92.5 83.6 L98.4 80.6 L102.5 75.1 L112.8 50.1 L120.2 17.8 L120.1 9.8 Z" />
+              </svg>
+            </span>
+            <span class="brand__word">MAHINDRA</span>
+          </a>
+          <span class="topbar__divider" aria-hidden="true"></span>
+          <span class="topbar__model">XEV <b>9e</b></span>
+        </div>
+
+        <p class="topbar__center">
+          <span>ELECTRIC ORIGIN</span>
+          <i aria-hidden="true"></i>
+          <span>INTERACTIVE CONFIGURATOR</span>
+        </p>
+
+        <div class="topbar__right">
+          <span class="live-pill"><i aria-hidden="true"></i><span id="live-label">STUDIO LIVE</span></span>
+          <button class="text-button" id="open-info" type="button">
+            About the model
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="hero">
+        <p class="eyebrow reveal reveal--1">
+          <span class="eyebrow__rule" aria-hidden="true"></span>
+          SUV Coupé / All-Electric
+        </p>
+        <h1 class="hero__title reveal reveal--2">XEV <span>9e</span></h1>
+        <p class="hero__lede reveal reveal--3">
+          A coupé silhouette drawn in a single line.<br />
+          An electric heart beneath it.
+        </p>
+      </section>
+
+      <div class="spec-stack reveal reveal--4" aria-label="Vehicle specifications">
+        <div class="spec">
+          <strong>656<small>km</small></strong>
+          <span>MIDC range</span>
+        </div>
+        <div class="spec">
+          <strong>210<small>kW</small></strong>
+          <span>Peak power</span>
+        </div>
+        <div class="spec">
+          <strong>79<small>kWh</small></strong>
+          <span>Battery</span>
+        </div>
+        <div class="spec">
+          <strong>5<small>★</small></strong>
+          <span>Bharat NCAP</span>
+        </div>
+      </div>
+
+      <aside class="config" id="config-panel" aria-label="Vehicle configuration">
+        <div class="config__scroll">
+          <div class="config__head">
+            <div>
+              <p class="config__kicker">Atelier</p>
+              <h2>Configure</h2>
+            </div>
+            <span class="config__index" aria-hidden="true">01 / 05</span>
+            <button class="icon-button config__close" id="close-config" type="button" aria-label="Close configurator">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          <section class="config__group config__group--paint">
+            <div class="group-head">
+              <span>Exterior paint</span>
+              <span class="group-meta">Official palette</span>
+            </div>
+            <div class="paint-selected">
+              <strong id="paint-name">Tango Red</strong>
+              <span id="paint-finish">Metallic clearcoat</span>
+            </div>
+            <div class="swatches" id="paint-swatches" role="group" aria-label="Paint colour"></div>
+            <p class="paint-note">Seven finishes. All shown under the studio's calibrated light.</p>
+          </section>
+
+          <section class="config__group">
+            <div class="group-head">
+              <span>Lighting signature</span>
+              <span class="group-meta">Exterior</span>
+            </div>
+            <div class="segment" role="group" aria-label="Exterior lighting mode">
+              <button type="button" data-light="off" aria-pressed="true" class="is-active">Off</button>
+              <button type="button" data-light="drl" aria-pressed="false">DRL</button>
+              <button type="button" data-light="headlights" aria-pressed="false">Headlights</button>
+            </div>
+            <label class="switch-row">
+              <span>Interior ambience</span>
+              <input type="checkbox" id="ambient-toggle" />
+              <i aria-hidden="true"></i>
+            </label>
+            <label class="switch-row">
+              <span>Rear light bar</span>
+              <input type="checkbox" id="tail-toggle" />
+              <i aria-hidden="true"></i>
+            </label>
+          </section>
+
+          <section class="config__group config__group--music">
+            <div class="group-head">
+              <span>Soundtrack</span>
+              <span class="group-meta">YouTube</span>
+            </div>
+            <form class="music-input-row" id="music-form">
+              <input
+                id="music-url"
+                type="url"
+                inputmode="url"
+                placeholder="Paste a YouTube link"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="YouTube track URL"
+              />
+              <button class="mini-button" id="music-load" type="submit">Load</button>
+            </form>
+            <div class="music-player" id="music-player" hidden></div>
+            <div class="music-controls">
+              <button class="music-play" id="music-toggle" type="button" aria-pressed="false" aria-label="Play soundtrack" disabled>
+                <svg class="music-play__play" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M7 4.4v11.2L15.8 10 7 4.4Z" fill="currentColor" />
+                </svg>
+                <svg class="music-play__pause" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M6.4 4.5h2.7v11H6.4zM10.9 4.5h2.7v11h-2.7z" fill="currentColor" />
+                </svg>
+              </button>
+              <div class="music-meta">
+                <strong id="music-title">No track loaded</strong>
+                <span id="music-status">Paste a link to bring the car to life.</span>
+              </div>
+              <label class="music-volume">
+                <span>Vol</span>
+                <input id="music-volume" type="range" min="0" max="100" value="65" aria-label="Music volume" />
+              </label>
+            </div>
+            <label class="switch-row music-switch">
+              <span>Light show</span>
+              <input type="checkbox" id="music-lights" checked />
+              <i aria-hidden="true"></i>
+            </label>
+            <button class="night-cta" id="night-drive" type="button">
+              <span class="night-cta__copy">
+                <strong>Night City drive</strong>
+                <small>3D boulevard · reactive rear lights</small>
+              </span>
+              <span class="night-cta__index">10</span>
+            </button>
+            <button class="night-cta night-cta--village" id="village-drive" type="button">
+              <span class="night-cta__copy">
+                <strong>Village road</strong>
+                <small>Golden hour · fields, hills &amp; rain</small>
+              </span>
+              <span class="night-cta__index">11</span>
+            </button>
+            <button class="night-cta night-cta--tokyo" id="tokyo-drive" type="button">
+              <span class="night-cta__copy">
+                <strong>Tokyo Dreams</strong>
+                <small>Neon avenue · shrine, sakura &amp; rain</small>
+              </span>
+              <span class="night-cta__index">13</span>
+            </button>
+            <p class="music-note">Playback continues while you explore. Use the track's own YouTube player if it is blocked by your browser.</p>
+          </section>
+
+          <section class="config__group">
+            <div class="group-head">
+              <span>Wheels</span>
+              <span class="group-meta">Included</span>
+            </div>
+            <div class="wheel-row">
+              <span class="wheel-glyph" aria-hidden="true">
+                <svg viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="1.1" />
+                  <circle cx="24" cy="24" r="6.2" stroke="currentColor" stroke-width="1.1" />
+                  <path d="M24 17.8V5.2M24 30.2v12.6M17.8 24H5.2M30.2 24h12.6M19.6 19.6 10.7 10.7M28.4 28.4l8.9 8.9M28.4 19.6l8.9-8.9M19.6 28.4l-8.9 8.9" stroke="currentColor" stroke-width="1.1" />
+                </svg>
+              </span>
+              <span class="wheel-copy">
+                <strong>19″ Aero</strong>
+                <small>245/55 R19 · Low-drag alloy</small>
+              </span>
+              <span class="tag">Standard</span>
+            </div>
+          </section>
+
+          <section class="config__group config__group--trim">
+            <div class="group-head">
+              <span>Interior</span>
+              <span class="group-meta">Dune</span>
+            </div>
+            <div class="trim-row">
+              <span class="trim-swatch" aria-hidden="true"></span>
+              <span>
+                <strong>Dune leather</strong>
+                <small>Triple-screen cockpit · Fixed glass roof</small>
+              </span>
+            </div>
+          </section>
+
+          <div class="config__footer">
+            <button class="primary-button" id="save-config" type="button">
+              <span>Save configuration</span>
+              <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <p class="micro">Independent design study. Not an official Mahindra configurator.</p>
+          </div>
+        </div>
+      </aside>
+
+      <button class="configure-fab" id="open-config" type="button" aria-controls="config-panel" aria-expanded="false">
+        <span>Configure</span>
+        <span class="configure-fab__dot" aria-hidden="true"></span>
+      </button>
+
+      <nav class="camera-rail" aria-label="Camera views and stage controls">
+        <span class="camera-rail__label">View</span>
+        <div class="camera-rail__scroll" id="view-buttons">
+          <button class="view-button is-active" type="button" data-view="hero" aria-pressed="true"><em>01</em><span>Front ¾</span></button>
+          <button class="view-button" type="button" data-view="profile" aria-pressed="false"><em>02</em><span>Profile</span></button>
+          <button class="view-button" type="button" data-view="rear" aria-pressed="false"><em>03</em><span>Rear ¾</span></button>
+          <button class="view-button" type="button" data-view="front" aria-pressed="false"><em>04</em><span>Front</span></button>
+          <button class="view-button" type="button" data-view="back" aria-pressed="false"><em>05</em><span>Rear</span></button>
+          <button class="view-button" type="button" data-view="top" aria-pressed="false"><em>06</em><span>Top</span></button>
+          <button class="view-button" type="button" data-view="wheel" aria-pressed="false"><em>07</em><span>Wheel</span></button>
+          <button class="view-button" type="button" data-view="cabin" aria-pressed="false"><em>08</em><span>Cabin</span></button>
+          <button class="view-button" type="button" data-view="under" aria-pressed="false"><em>09</em><span>Under</span></button>
+          <button class="view-button" type="button" data-view="night" aria-pressed="false"><em>10</em><span>Night City</span></button>
+          <button class="view-button" type="button" data-view="village" aria-pressed="false"><em>11</em><span>Village</span></button>
+          <button class="view-button" type="button" data-view="alps" aria-pressed="false"><em>12</em><span>Alps</span></button>
+          <button class="view-button" type="button" data-view="tokyo" aria-pressed="false"><em>13</em><span>Tokyo</span></button>
+        </div>
+        <div class="camera-rail__tools">
+          <button class="tool-button" id="toggle-motion" type="button" aria-pressed="false" title="Rolling wheels" aria-label="Toggle rolling wheels">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="7.4" stroke="currentColor" stroke-width="1.2" />
+              <circle cx="12" cy="12" r="2.2" stroke="currentColor" stroke-width="1.2" />
+              <path d="M12 4.6v2.1M12 17.3v2.1M4.6 12h2.1M17.3 12h2.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <button class="tool-button" id="toggle-rotate" type="button" aria-pressed="false" title="Auto orbit" aria-label="Toggle auto orbit">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 12a8 8 0 0 1-13.8 5.5M4 12a8 8 0 0 1 13.8-5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path d="m18.8 3.9.1 3.4-3.4.1M5.2 20.1l-.1-3.4 3.4-.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <span class="tool-divider" aria-hidden="true"></span>
+          <button class="tool-button" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
+          </button>
+          <button class="tool-button" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M12 5v14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
+          </button>
+          <button class="tool-button tool-button--reset" id="reset-view" type="button" title="Reset view" aria-label="Reset view">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4.5 8.5A8 8 0 1 1 4 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+              <path d="M4.2 4.3v4.4h4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <div class="drive-hud" id="drive-hud" role="group" aria-label="Drive controls">
+        <span class="drive-hud__stage"><i aria-hidden="true"></i><span id="drive-stage-label">Studio</span></span>
+        <label class="drive-speed">
+          <span class="drive-speed__label">Speed</span>
+          <input id="drive-speed" type="range" min="0" max="202" step="1" value="35" aria-label="Driving speed in km/h" />
+          <output class="drive-speed__value" id="drive-speed-value" for="drive-speed">35 <small>km/h</small></output>
+        </label>
+        <button class="drive-rain" id="drive-rain" type="button" aria-pressed="false">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5.2 11.6a3.3 3.3 0 0 1 .5-6.55 4.4 4.4 0 0 1 8.3 1.1 2.9 2.9 0 0 1 .4 5.45" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+            <path d="M6.2 14.1 5.3 16M10 14.1 9.1 16M13.8 14.1l-.9 1.9" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+          </svg>
+          <span>Rain off</span>
+        </button>
+        <button class="drive-audio" id="drive-audio" type="button" aria-pressed="false" aria-label="Mute ambience">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M4.4 8.1h2.5L10 5.4v9.2L6.9 11.9H4.4z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round" />
+            <path class="drive-audio__waves" d="M12.2 7.6a3.1 3.1 0 0 1 0 4.8M14.3 5.7a5.7 5.7 0 0 1 0 8.6" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" />
+            <path class="drive-audio__slash" d="m4.6 4.6 10.8 10.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0" />
+          </svg>
+          <span>Sound on</span>
+        </button>
+      </div>
+
+      <aside class="tokyo-hud" id="tokyo-hud" aria-label="Tokyo stage controls" hidden>
+        <div class="tokyo-hud__head">
+          <span class="tokyo-hud__kicker">Tokyo Dreams</span>
+          <span class="tokyo-hud__jp" lang="ja">東京</span>
+        </div>
+        <div class="tokyo-drive-readout" id="tokyo-drive-readout" hidden>
+          <span class="tokyo-drive-readout__speed" id="tokyo-drive-speed">000</span>
+          <span class="tokyo-drive-readout__unit">km/h</span>
+          <span class="tokyo-drive-readout__gear" id="tokyo-drive-gear">N</span>
+        </div>
+        <div class="tokyo-hud__grid">
+          <button class="tokyo-toggle" id="tokyo-time" type="button" aria-pressed="true">
+            <span class="tokyo-toggle__dot" aria-hidden="true"></span><span id="tokyo-time-label">Night</span>
+          </button>
+          <button class="tokyo-toggle" id="tokyo-neon" type="button" aria-pressed="true">Neon on</button>
+          <button class="tokyo-toggle" id="tokyo-rain" type="button" aria-pressed="false">Rain off</button>
+          <button class="tokyo-toggle" id="tokyo-audio" type="button" aria-pressed="false">Sound on</button>
+        </div>
+        <div class="tokyo-hud__quality" role="group" aria-label="Scene quality">
+          <span>Quality</span>
+          <button type="button" data-quality="high" aria-pressed="true">High</button>
+          <button type="button" data-quality="medium" aria-pressed="false">Med</button>
+          <button type="button" data-quality="low" aria-pressed="false">Low</button>
+        </div>
+        <div class="tokyo-hud__actions">
+          <button class="tokyo-action tokyo-action--primary" id="tokyo-drive-mode" type="button" aria-pressed="false">Drive</button>
+        </div>
+      </aside>
+
+      <section class="tokyo-poi" id="tokyo-poi" aria-live="polite" hidden>
+        <div class="tokyo-poi__top">
+          <span id="tokyo-poi-district">Neon District</span>
+          <button class="tokyo-poi__close" id="tokyo-poi-close" type="button" aria-label="Close place">×</button>
+        </div>
+        <h2 class="tokyo-poi__title">
+          <span id="tokyo-poi-name">Tokyo Crossing</span>
+          <em id="tokyo-poi-jp" lang="ja">東京交差点</em>
+        </h2>
+        <p class="tokyo-poi__body" id="tokyo-poi-description"></p>
+        <div class="tokyo-poi__actions">
+          <span class="tokyo-poi__hint">Click a sign to explore</span>
+        </div>
+      </section>
+
+      <p class="tokyo-drive-hint" id="tokyo-drive-hint">
+        <span>W/S</span> throttle <i></i> <span>A/D</span> steer <i></i> <span>Shift</span> boost <i></i> <span>Space</span> brake <i></i> <span>Esc</span> exit
+      </p>
+      <div class="drive-pad" id="tokyo-drive-pad" aria-label="Drive controls">
+        <div class="drive-pad__steer">
+          <button class="drive-pad__button" type="button" data-drive="left" aria-label="Steer left">◀</button>
+          <button class="drive-pad__button" type="button" data-drive="right" aria-label="Steer right">▶</button>
+        </div>
+        <div class="drive-pad__pedals">
+          <button class="drive-pad__button drive-pad__button--boost" type="button" data-drive="boost" aria-label="Boost">Boost</button>
+          <button class="drive-pad__button drive-pad__button--back" type="button" data-drive="back" aria-label="Brake or reverse">▼</button>
+          <button class="drive-pad__button drive-pad__button--forward" type="button" data-drive="forward" aria-label="Accelerate">▲</button>
+        </div>
+      </div>
+
+      <nav class="mission-dock" id="mission-dock" aria-label="Experience">
+        <span class="mission-dock__label">Experience</span>
+        <button class="mission-chip" type="button" data-mission="date" aria-label="Start the Night City date">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 16.4S3.4 12.2 3.4 7.9a3.5 3.5 0 0 1 6.6-1.7 3.5 3.5 0 0 1 6.6 1.7c0 4.3-6.6 8.5-6.6 8.5Z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round" />
+          </svg>
+          <span>Date</span>
+          <small>Night City</small>
+        </button>
+      </nav>
+
+      <section class="mission-hud" id="mission-hud" aria-live="polite" hidden>
+        <div class="mission-hud__top">
+          <p class="mission-hud__eyebrow" id="mission-eyebrow">Night City · Date</p>
+          <button class="mission-hud__end" id="mission-end" type="button">End</button>
+        </div>
+        <h2 id="mission-title">An evening with Anaya</h2>
+        <p class="mission-hud__step" id="mission-step">Anaya steps out to meet you</p>
+        <p class="mission-hud__dialogue" id="mission-dialogue" hidden>
+          <span class="mission-hud__speaker" id="mission-speaker"></span>
+          <span class="mission-hud__line" id="mission-line"></span>
+        </p>
+        <div class="mission-hud__track"><i id="mission-progress"></i></div>
+        <div class="mission-hud__meta">
+          <span id="mission-clock">18:40</span>
+          <span id="mission-duration">0 / 22 min</span>
+        </div>
+      </section>
+
+      <p class="orbit-hint" id="orbit-hint">
+        <span class="orbit-hint__mouse" aria-hidden="true"></span>
+        Drag to orbit <i></i> Scroll to zoom
+      </p>
+
+      <p class="stage-caption" aria-hidden="true">
+        <span>Real-time / Three.js</span>
+        <span>Study Nº 01</span>
+      </p>
+
+      <div class="panel-scrim" id="panel-scrim" hidden></div>
+
+      <section class="info-modal" id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-title" aria-hidden="true">
+        <button class="icon-button info-modal__close" id="close-info" type="button" aria-label="Close about panel">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+          </svg>
+        </button>
+        <div class="info-modal__scroll">
+          <p class="eyebrow"><span class="eyebrow__rule" aria-hidden="true"></span>About this study</p>
+          <h2 id="info-title">An electric <em>coupé</em>,<br />built from code.</h2>
+          <p class="info-modal__intro">
+            A real-time sculpture of the Mahindra XEV 9e — every panel, reflection and
+            light signature authored procedurally in Three.js. No photographs, no imported
+            model, no Blender.
+          </p>
+          <div class="info-grid">
+            <div><span>Length</span><strong>4,789 mm</strong></div>
+            <div><span>Width</span><strong>1,907 mm</strong></div>
+            <div><span>Height</span><strong>1,694 mm</strong></div>
+            <div><span>Wheelbase</span><strong>2,775 mm</strong></div>
+            <div><span>Battery</span><strong>79 kWh</strong></div>
+            <div><span>Range</span><strong>656 km MIDC</strong></div>
+          </div>
+          <p class="info-modal__body">
+            The electric SUV coupé blends a fast roofline with the presence of an SUV.
+            Its closed grille, full-width front light bar and twin-peak emblem are
+            recreated alongside a triple-screen cabin, 19-inch aero wheels and a flat
+            battery floor. Use the view rail to walk around it, open the cabin, or look
+            beneath the skin.
+          </p>
+          <div class="info-modal__colors">
+            <span>Tango Red</span><span>Ruby Velvet</span><span>Everest White</span>
+            <span>Stealth Black</span><span>Nebula Blue</span><span>Deep Forest</span>
+            <span>Desert Myst</span>
+          </div>
+          <p class="disclaimer">
+            Independent, non-commercial design study. Not affiliated with or endorsed by
+            Mahindra &amp; Mahindra Ltd. Vehicle dimensions and colours reference publicly
+            available specifications.
+          </p>
+          <button class="primary-button" type="button" data-close-info>Return to the studio</button>
+        </div>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <div class="loader" id="loader" aria-live="polite">
+        <div class="loader__mark" aria-hidden="true">
+          <svg viewBox="0 0 122 86" fill="currentColor">
+            <path d="M117.7 3.8 L112.3 1.3 L103.9 5.6 L88.4 20.4 L66.1 45.0 L69.9 48.7 L104.7 16.3 L109.0 14.0 L110.9 14.9 L110.0 30.4 L102.3 57.7 L95.3 73.2 L92.6 75.9 L89.1 76.6 L84.8 74.4 L20.9 8.2 L11.8 2.0 L7.8 1.5 L5.0 2.8 L2.4 6.7 L1.3 12.7 L3.8 31.0 L12.2 59.6 L21.7 78.8 L28.0 83.5 L35.2 82.5 L44.2 75.7 L55.1 64.2 L51.6 60.9 L34.8 75.5 L30.4 76.6 L27.5 74.6 L22.0 64.7 L14.3 41.7 L10.3 22.4 L11.3 14.3 L15.4 15.4 L78.5 77.6 L85.3 82.4 L92.5 83.6 L98.4 80.6 L102.5 75.1 L112.8 50.1 L120.2 17.8 L120.1 9.8 Z" />
+          </svg>
+        </div>
+        <p class="loader__kicker">MAHINDRA ELECTRIC ORIGIN</p>
+        <p class="loader__title">XEV <span>9e</span></p>
+        <div class="loader__track"><i id="loader-bar"></i></div>
+        <div class="loader__meta">
+          <span id="loader-status">Preparing the studio</span>
+          <span id="loader-pct">00</span>
+        </div>
+      </div>
+
+      <noscript>
+        <div class="no-script">This experience needs JavaScript and WebGL enabled.</div>
+      </noscript>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
