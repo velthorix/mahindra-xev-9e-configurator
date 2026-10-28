@@ -81,7 +81,27 @@ for (const spec of specs) {
     try {
       await page.goto(url, { waitUntil: "load", timeout: 90000 });
       await page.waitForFunction(() => window.__XEV_READY__ === true, { timeout: 90000 });
-      await page.evaluate(() => window.__XEV?.freeze?.());
+      await page.evaluate(() => {
+        // `?clean=1` hides the studio chrome, but the config panel still owns
+        // the camera's lateral offset and the Experience dock lives outside
+        // that rule. Close the panel and remove every overlay so documentation
+        // renders show only the car, centred in frame.
+        document.querySelector("#close-config")?.click();
+        for (const selector of [
+          ".mission-dock",
+          ".mission-hud",
+          ".drive-hud",
+          ".tokyo-hud",
+          ".tokyo-poi",
+          ".tokyo-drive-hint",
+          ".drive-pad",
+        ]) {
+          document.querySelectorAll(selector).forEach((el) => {
+            el.style.display = "none";
+          });
+        }
+        window.__XEV?.freeze?.();
+      });
       await page.waitForTimeout(600);
       const lost = await page.evaluate(() =>
         Boolean(window.__XEV?.renderer?.getContext?.()?.isContextLost?.())
