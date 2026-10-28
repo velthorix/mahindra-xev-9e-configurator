@@ -274,17 +274,27 @@ const state = {
   musicPreview: false,
 };
 
+// Default soundtrack. It loops until the listener loads a different track.
+const DEFAULT_TRACK_URL = "https://youtu.be/6x3wzc4ijQQ?si=EBknBJkFCNv3M62M";
+const DEFAULT_TRACK_ID = "6x3wzc4ijQQ";
+const DEFAULT_TRACK_TITLE = "XEV 9e soundtrack";
+
 const music = {
   player: null,
   ready: false,
   playing: false,
   loading: false,
-  videoId: "",
-  url: "",
-  title: "",
+  videoId: DEFAULT_TRACK_ID,
+  url: DEFAULT_TRACK_URL,
+  title: DEFAULT_TRACK_TITLE,
   patternTime: 0,
   volume: 65,
   apiPromise: null,
+  // Autoplay/gesture bookkeeping. `userPaused` keeps a deliberate pause from
+  // being undone by the next click anywhere on the page.
+  userPaused: false,
+  mutedForAutoplay: false,
+  gestureArmed: false,
 };
 
 const ambience = createAmbience();
@@ -1991,9 +2001,44 @@ function updateMusicUI() {
   }
 }
 
+// Browsers block audible autoplay until the page has been touched. The player
+// falls back to muted playback so the loop (and the rear light show) still runs,
+// then this one-shot listener restores the saved volume on the first gesture.
+function armMusicGesture() {
+  if (music.gestureArmed) return;
+  music.gestureArmed = true;
+
+  const unlock = (event) => {
+    // The music controls handle their own gesture so loading a new track does
+    // not briefly start the old one.
+    if (event.target?.closest?.("#music-toggle, #music-form, .music-volume")) {
+      return;
+    }
+
+    music.gestureArmed = false;
+    window.removeEventListener("pointerdown", unlock, true);
+    window.removeEventListener("keydown", unlock, true);
+    window.removeEventListener("touchstart", unlock, true);
+
+    if (!music.player || !music.ready || music.userPaused) return;
+    if (music.mutedForAutoplay) {
+      music.player.unMute();
+      music.player.setVolume(music.volume);
+      music.mutedForAutoplay = false;
+    }
+    if (!music.playing) music.player.playVideo();
+    if (music.playing) setMusicStatus("Playing · on a loop", false);
+  };
+
+  window.addEventListener("pointerdown", unlock, true);
+  window.addEventListener("keydown", unlock, true);
+  window.addEventListener("touchstart", unlock, true);
+}
+
 function createYouTubePlayer(videoId) {
   const host = $("#music-player");
   if (!host || !window.YT?.Player) return false;
+  if (music.player) return false;
 
   host.hidden = false;
   host.innerHTML = "";
@@ -2008,6 +2053,11 @@ function createYouTubePlayer(videoId) {
     height: 180,
     playerVars: {
       autoplay: 1,
+      // `loop` needs the video repeated in `playlist` for a single-video embed.
+      // The ENDED handler below restarts the track as well, so looping survives
+      // `loadVideoById` on browsers that ignore the player variable.
+      loop: 1,
+      playlist: videoId,
       controls: 0,
       disablekb: 1,
       fs: 0,
@@ -2023,17 +2073,45 @@ function createYouTubePlayer(videoId) {
         const data = event.target.getVideoData?.();
         if (data?.title) music.title = data.title;
         updateMusicUI();
-        setMusicStatus("Ready · press play to start", false);
+        setMusicStatus("Starting the soundtrack…", false);
+        armMusicGesture();
         try {
           event.target.playVideo();
         } catch {
           /* Browsers may require the explicit play button. */
         }
+        // If audible autoplay was refused, restart muted so the track loops
+        // anyway; the first gesture then restores the volume.
         setTimeout(() => {
-          if (music.ready && !music.playing) {
+          if (!music.ready || music.userPaused || music.playing) return;
+          const playerState = music.player?.getPlayerState?.();
+          const states = window.YT?.PlayerState;
+          if (playerState === states?.PLAYING) return;
+          if (playerState === states?.BUFFERING) {
+            // Buffering with media already downloaded means playback was
+            // allowed and is simply catching up; leave the sound on.
+            const loaded = music.player?.getVideoLoadedFraction?.() || 0;
+            if (loaded > 0) {
+              setMusicStatus("Buffering the soundtrack…", false);
+              return;
+            }
+          }
+          try {
+            music.mutedForAutoplay = true;
+            event.target.mute();
+            event.target.playVideo();
+            setMusicStatus("Tap anywhere for soundtrack audio", false);
+            // Some browsers still refuse muted autoplay in an embed. Ask for a
+            // gesture instead of leaving a silent, stalled player on screen.
+            setTimeout(() => {
+              if (music.ready && !music.playing && !music.userPaused) {
+                setMusicStatus("Tap anywhere to start the soundtrack", false);
+              }
+            }, 2200);
+          } catch {
             setMusicStatus("Press play to start the soundtrack", false);
           }
-        }, 1600);
+        }, 1500);
       },
       onStateChange: (event) => {
         const playerState = window.YT?.PlayerState;
@@ -2042,21 +2120,37 @@ function createYouTubePlayer(videoId) {
           music.patternTime = 0;
           const data = event.target.getVideoData?.();
           if (data?.title) music.title = data.title;
-          setMusicStatus("Playing · rear light show active", false);
+          if (music.mutedForAutoplay || event.target.isMuted?.()) {
+            music.mutedForAutoplay = true;
+            setMusicStatus("Playing muted · tap anywhere for sound", false);
+          } else {
+            setMusicStatus("Playing · on a loop", false);
+          }
           requestRender();
         } else if (event.data === playerState?.PAUSED) {
           music.playing = false;
           setMusicStatus("Paused", false);
           requestRender();
         } else if (event.data === playerState?.ENDED) {
-          music.playing = false;
-          setMusicStatus("Finished · play again", false);
+          // Keep the chosen track running until another one is loaded.
+          music.playing = true;
+          setMusicStatus("Looping soundtrack…", false);
+          try {
+            event.target.seekTo(0, true);
+            event.target.playVideo();
+          } catch {
+            music.playing = false;
+            setMusicStatus("Finished · play again", false);
+          }
           requestRender();
         } else if (event.data === playerState?.BUFFERING) {
           setMusicStatus("Buffering…", false);
         } else if (event.data === playerState?.CUED) {
           music.playing = false;
-          setMusicStatus("Ready · press play to start", false);
+          if (!music.userPaused) {
+            armMusicGesture();
+            setMusicStatus("Press play to start the soundtrack", false);
+          }
         }
         updateMusicUI();
       },
@@ -2100,15 +2194,20 @@ async function loadMusicTrack(value) {
     music.videoId = id;
     music.url = String(value).trim();
     music.title = "";
+    music.userPaused = false;
+    music.mutedForAutoplay = false;
     music.ready = Boolean(music.player);
     updateMusicUI();
 
     if (!music.player) {
       createYouTubePlayer(id);
     } else {
+      // Loading happens from a click, so this is a safe moment to restore sound.
+      music.player.unMute?.();
+      music.player.setVolume(music.volume);
       music.player.loadVideoById(id);
     }
-    showToast("Track loaded · press play if the browser blocks sound");
+    showToast("Track loaded · it will loop until you change it");
   } catch (error) {
     music.apiPromise = null;
     setMusicStatus(error.message || "YouTube could not be loaded.", true);
@@ -2120,6 +2219,32 @@ async function loadMusicTrack(value) {
       loadButton.disabled = false;
       loadButton.textContent = "Load";
     }
+  }
+}
+
+async function startDefaultSoundtrack() {
+  if (music.player) return;
+
+  music.videoId = DEFAULT_TRACK_ID;
+  music.url = DEFAULT_TRACK_URL;
+  music.title = DEFAULT_TRACK_TITLE;
+  music.userPaused = false;
+  music.mutedForAutoplay = false;
+  updateMusicUI();
+  setMusicStatus("Connecting to YouTube…", false);
+
+  try {
+    await loadYouTubeApi();
+    if (!window.YT?.Player) throw new Error("The YouTube player is unavailable.");
+    // A track may have been pasted while the API was loading.
+    if (music.player || music.videoId !== DEFAULT_TRACK_ID) return;
+
+    createYouTubePlayer(DEFAULT_TRACK_ID);
+    armMusicGesture();
+  } catch (error) {
+    music.apiPromise = null;
+    setMusicStatus("Soundtrack unavailable · paste a YouTube link to play your own.", true);
+    console.warn("Default soundtrack failed to load:", error);
   }
 }
 
@@ -2218,16 +2343,41 @@ function setupMusicControls() {
 
   toggle?.addEventListener("click", () => {
     if (!music.player || !music.ready) {
-      setMusicStatus("Load a YouTube track first.", true);
+      setMusicStatus("The soundtrack is still loading.", true);
       return;
     }
-    if (music.playing) music.player.pauseVideo();
-    else music.player.playVideo();
+    const states = window.YT?.PlayerState;
+    const playerState = music.player.getPlayerState?.();
+    const running =
+      music.playing ||
+      playerState === states?.PLAYING ||
+      playerState === states?.BUFFERING;
+    if (running) {
+      music.userPaused = true;
+      music.player.pauseVideo();
+    } else {
+      music.userPaused = false;
+      if (music.mutedForAutoplay) {
+        music.player.unMute();
+        music.player.setVolume(music.volume);
+        music.mutedForAutoplay = false;
+      }
+      music.player.playVideo();
+    }
   });
 
   volume?.addEventListener("input", () => {
     music.volume = Number(volume.value) || 0;
-    if (music.ready) music.player?.setVolume(music.volume);
+    if (!music.ready) return;
+    if (music.mutedForAutoplay && music.volume > 0) {
+      music.player?.unMute();
+      music.mutedForAutoplay = false;
+    }
+    music.player?.setVolume(music.volume);
+    // Dragging the volume is a gesture, so it can also start a track that the
+    // browser refused to autoplay.
+    const playing = music.player?.getPlayerState?.() === window.YT?.PlayerState?.PLAYING;
+    if (!playing && !music.userPaused) music.player?.playVideo();
   });
 
   $("#night-drive")?.addEventListener("click", () => {
@@ -2955,6 +3105,9 @@ async function boot() {
     await build();
     renderEnabled = true;
     requestRender();
+    // Documentation renders stay silent; the live configurator opens with the
+    // default track already looping.
+    if (!CLEAN) startDefaultSoundtrack();
   } catch (error) {
     console.error("XEV 9e failed to build:", error);
     if (loaderStatus) {
