@@ -8,6 +8,8 @@ One scripted experience starts from the **Experience** dock: a 22-minute date th
 
 ![Mahindra XEV 9e studio render](docs/xev-hero.png)
 
+[![Watch the 54-second Mahindra XEV 9e walkthrough](docs/xev-video-poster.jpg)](https://github.com/velthorix/mahindra-xev-9e-configurator/blob/main/docs/mahindra-xev-9e.mp4)
+
 <p align="center">
   <img src="docs/xev-profile.png" width="49%" alt="XEV 9e profile render">
   <img src="docs/xev-configurator.png" width="49%" alt="XEV 9e configurator in Everest White">
